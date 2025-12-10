@@ -1,93 +1,87 @@
-# 📄 Technical Project Report: Universal Market Research Tool
+# 🕵️‍♂️ AI-Powered Market Research Assistant
 
-## 1. Project Overview
-The **Universal Market Research Tool** is an automated OSINT (Open Source Intelligence) application designed to streamline B2B lead generation and company scouting. By combining a user-friendly frontend with a powerful low-code backend, the tool allows users to input natural language research queries (e.g., *"Top 10 AI startups in Berlin"*) and receive structured, verifiable data in a Google Spreadsheet.
+**A lightweight, full-stack tool that automates market research using n8n, Perplexity AI, and Google Sheets.**
 
-### Key Objectives
-* **Automation:** Replace manual web searching and data entry with autonomous AI agents.
-* **Structured Data:** Convert unstructured web data into standardized formats (JSON/CSV).
-* **Scalability:** Decoupled architecture allowing for high-volume queries without browser crashes.
+I built this project to automate the tedious process of gathering market data. Instead of manually Googling and summarizing, this tool takes a query, performs a grounded search via Perplexity's `sonar-pro`, cleans the data, and logs structured results directly into Google Sheets.
 
 ---
 
-## 2. System Architecture
-The application follows a **Headless Architecture** pattern, separating the frontend (User Interface) from the logic layer (n8n).
+## 🛠 Tech Stack
 
-### Technology Stack
-* **Frontend:** HTML5, CSS3 (Dark Mode), Vanilla JavaScript.
-* **Orchestrator (Backend):** n8n (Self-hosted on Docker/MacBook M2).
-* **Intelligence Engine:** Perplexity API (Model: `sonar-pro`).
-* **Database/Storage:** Google Sheets (via API).
+- **Frontend:** Vanilla HTML5, CSS, & JavaScript (Fetch API).
+- **Orchestration:** [n8n](https://n8n.io/) (Workflow automation).
+- **Intelligence:** Perplexity API (`sonar-pro` model) for real-time, internet-grounded data.
+- **Database:** Google Sheets (via Google Cloud Service Account).
 
 ---
 
-## 3. Workflow Logic (The "Backend")
-The core logic is hosted on an n8n workflow consisting of four sequential stages:
+## ⚙️ How It Works Under the Hood
 
-### Stage 1: The Trigger (Webhook)
-* **Type:** `POST` Webhook.
-* **Function:** Acts as the API gateway. It receives the JSON payload (`{ "user_prompt": "..." }`) from the HTML frontend.
-* **Protocol:** Configured to accept CORS requests from the local client and respond immediately to prevent UI freezing.
+This isn't just a wrapper for ChatGPT. I had to solve a few specific engineering problems to make this reliable. Here is the flow:
 
-### Stage 2: The Intelligence Agent (Perplexity API)
-* **Model:** `sonar-pro` (Online search enabled).
-* **Prompt Engineering:** A strict system prompt is used to enforce JSON-only output, stripping away conversational filler.
-    * *System Prompt:* "You are a B2B Market Intelligence Analyst. Return valid JSON."
-* **Data Extraction:** The agent extracts 12 key data points per entity, including Revenue Estimates, Tech Stack, and Decision Maker contact info.
+### 1. The Frontend (`html form.html`)
+The interface is a single-file application. I avoided heavy frameworks like React to keep it deployable anywhere (even locally).
+- **State Management:** When you click submit, the button enters a `Loading...` state. This is crucial because API calls to Perplexity can take 10-30 seconds; this prevents users from rage-clicking and double-charging the API.
+- **Error Handling:** It catches network errors specifically to handle scenarios where the n8n self-hosted instance might be asleep or unreachable.
 
-### Stage 3: The Normalizer (JavaScript Code Node)
-* **Problem:** LLMs often output "dirty" JSON (wrapped in Markdown or containing trailing text).
-* **Solution:** A custom Regex parser `response.match(/\[[\s\S]*\]/)` isolates the JSON array.
-* **Session Management:** The code dynamically generates a **"Header Row"** containing the search topic and timestamp. This separates distinct search sessions in the Google Sheet, preventing data confusion.
+### 2. The Backend Logic (n8n)
+The n8n workflow acts as the API gateway. It receives the webhook from the frontend and orchestrates the logic:
+- **The Model Choice:** I specifically chose `sonar-pro`. Unlike generic GPT-4, this model is "grounded," meaning it searches the live internet before answering. This significantly reduces hallucinations when asking about current market trends.
+- **The "JSON Problem":** LLMs are notoriously bad at outputting strict JSON. They often wrap the response in Markdown code blocks (e.g., ` ```json {data} ``` `).
+- **The Regex Fix:** To solve this, I implemented a robust Regex extractor in n8n. It strips away the Markdown formatting to ensure the data passed to Google Sheets is valid, parseable JSON every time.
 
-### Stage 4: Persistence (Google Sheets)
-* **Action:** `Append` operation.
-* **Mapping:** Data is auto-mapped to columns (`Entity Name`, `Industry`, `Email`, etc.). The specific "Header Rows" created in Stage 3 are also written here to visually segment the data history.
+### 3. Data Persistence (Google Sheets)
+- **Session Tracking:** The JavaScript logic includes dynamic "Header Rows." Instead of just appending rows blindly, the system logs query history intelligently, allowing me to see which research session produced which insights.
 
 ---
 
-## 4. Technical Implementation Details
+## 🚀 Installation & Setup
 
-### A. The JSON Parser (JavaScript)
-To ensure system stability, the Code Node implements error handling and session tagging.
+If you want to spin this up yourself, here is what you need.
 
-```javascript
-// Logic to handle session separation
-let userTopic = $('Webhook').item.json.body.user_prompt || "General Search";
+### Prerequisites
+1. A self-hosted or cloud instance of **n8n**.
+2. A **Perplexity API Key** (needs credits).
+3. A **Google Cloud Service Account** with read/write access to Sheets.
 
-// Create visual separation in the database
-const headerRow = {
-  'Entity Name': `━━━ 🔍 TOPIC: ${userTopic} (${new Date().toLocaleDateString()}) ━━━`,
-  'Industry Niche': '---'
-};
+### Step-by-Step Guide
 
-// Combine empty spacing, header, and actual data
-const finalOutput = [emptyRow, headerRow, ...dataRows];
+**1. The Backend (n8n)**
+- Download the workflow file `Market_Research_Tool.json` from this repository.
+- Import it into your n8n instance.
+- Add your Perplexity and Google Cloud credentials to n8n's credential manager.
 
-## B. The Frontend Interface
+**2. The Frontend**
+- Open `html form.html` in any text editor (VS Code, Notepad, etc.).
+- Locate the constant at the top of the script:
+  ```javascript
+  const WEBHOOK_URL = "YOUR_N8N_PRODUCTION_URL_HERE";
+  ```
+- Replace it with your specific n8n Webhook URL.
 
-The dashboard is a single-file HTML application (`html form.html`). It handles the POST request using the browser's **fetch API**.
-
-- **State Management:** The button enters a “Loading” state to prevent double submissions.  
-- **Error Handling:** Catches network errors if the n8n instance is offline.
+**3. Run It**
+- Simply open `html form.html` in your browser. No `npm install` or build server required.
 
 ---
 
-## 🚀 5. Installation & Setup
+## 🧠 Challenges & Solutions (Dev Log)
 
-### **Prerequisites**
-- An instance of **n8n**  
-- A **Perplexity API Key**  
-- A **Google Cloud Service Account** (for Sheets access)
+Building this wasn't entirely smooth. Here are the specific hurdles I hit and how I fixed them:
 
-### **Step-by-Step**
+| Challenge | The Fix |
+| :--- | :--- |
+| **Hallucinations** | Generic models made up stats. Switching to **`sonar-pro`** (search-grounded) fixed this by forcing the AI to cite live sources. |
+| **Broken JSON** | The AI kept returning Markdown text. I wrote a **Regex extractor** node in n8n to forcibly clean the output before parsing. |
+| **Rate Limiting** | Users could spam the submit button. I added **frontend state management** to disable the button until the `fetch` request resolves. |
+| **Context Loss** | It was hard to match rows to queries. I added **Session Tracking** logic to log the original query alongside the results in the Sheet. |
 
-1. **Backend:**  
-   Download `Market_Research_Tool.json` from this repository and import it into n8n.
+---
 
-2. **Credentials:**  
-   Set up your Perplexity and Google Sheets credentials in n8n.
+## 🔮 Future Improvements
 
-3. **Frontend:**  
-   Open `html form.html` in a text editor and replace  
-   ```js
+- **Authentication:** Currently, the frontend is open. I plan to add basic API Key auth or a login screen.
+- **Export to PDF:** Add a feature to generate a formatted PDF report from the JSON data.
+- **Multi-Model Support:** Allow the user to toggle between `sonar-pro` and `gpt-4o` via the frontend UI.
+
+---
+*Created as a personal utility tool. Feel free to fork and adapt!*
