@@ -12,5 +12,4 @@ This project is an automated OSINT tool designed to scout B2B leads using AI age
 * **[Automation Workflow](Market_Research_Tool.json):** The backend automation logic for n8n.
 * **[Project Report](Project_Report.md):** 📄 **READ THIS FIRST** - Full technical documentation and architecture.
 
-## 🎓 Academic Submission
-Submitted for the "Universal Market Research" project.
+
