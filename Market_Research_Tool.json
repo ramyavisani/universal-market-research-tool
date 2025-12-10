@@ -1,0 +1,287 @@
+{
+  "name": "Market Research App (Web Form)",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.perplexity.ai/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "perplexityApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "sonar"
+            },
+            {
+              "name": "messages",
+              "value": "={{ [\n  { \"role\": \"system\", \"content\": \"You are a B2B Market Intelligence Analyst. Return valid JSON.\" },\n  { \"role\": \"user\", \"content\": \"Research Task: Find 10 companies matching: '\" + $json.body.user_prompt + \"'. \\n\\nFind: Name, Industry, Description, Employees, Revenue, Founded, Tech Stack, CEO, Website, Email, Location, LinkedIn.\\n\\nReturn JSON List: [{'name': '...', 'industry': '...', 'description': '...', 'employees': '...', 'revenue': '...', 'founded': '...', 'tech_stack': '...', 'decision_maker': '...', 'website': '...', 'contact': '...', 'location': '...', 'linkedin': '...', 'confidence': 'High/Med'}]\" }\n] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "12f60ea8-fe00-476a-8395-f7c753b045d2",
+      "name": "Perplexity Analyst",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        224,
+        0
+      ],
+      "credentials": {
+        "perplexityApi": {
+          "id": "CSTPWvGDs8Ds4Vy6",
+          "name": "Perplexity account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Get the AI Response\nconst aiResponse = items[0].json.choices[0].message.content;\n\n// 2. Get the User Topic from the Start\n// ⚠️ IMPORTANT: Change 'Webhook' below to the EXACT name of your first node\nlet userTopic = \"Market Research\";\ntry {\n  // Tries to get the prompt. Handles if it's in body or query.\n  userTopic = $('Webhook').item.json.body.user_prompt || $('Webhook').item.json.query.user_prompt;\n} catch (e) {\n  // If we can't find it, just use a default\n  userTopic = \"New Search\";\n}\n\n// 3. Parse the AI Data\nconst jsonStart = aiResponse.indexOf('[');\nconst jsonEnd = aiResponse.lastIndexOf(']') + 1;\nconst jsonString = aiResponse.substring(jsonStart, jsonEnd);\nconst results = JSON.parse(jsonString);\n\n// 4. Create the \"Banner\" Rows (Title & Space)\nconst headerRow = {\n  'Entity Name': `━━━ 🔍 TOPIC: ${userTopic} (${new Date().toLocaleDateString()}) ━━━`,\n  'Industry Niche': '---',\n  'Description': '---' \n  // We fill a few columns with '---' so the row is clearly visible\n};\n\nconst emptyRow = {\n  'Entity Name': '' // This creates the blank space\n};\n\n// 5. Map the actual AI Data\nconst dataRows = results.map(item => ({\n  'Entity Name': item.name,\n  'Industry Niche': item.industry,\n  'Description': item.description,\n  'Employee Count': item.employees || 'Unknown',\n  'Revenue Estimate': item.revenue || 'Private',\n  'Year Founded': item.founded || 'N/A',\n  'Key Technologies': item.tech_stack || 'N/A',\n  'Key Decision Maker': item.decision_maker || 'N/A',\n  'Website': item.website,\n  'Email/Contact': item.contact,\n  'Location': item.location,\n  'Social_Linkedin': item.linkedin,\n  'Confidence': item.confidence\n}));\n\n// 6. Combine: Empty Row -> Header Row -> Data Rows\nconst finalOutput = [emptyRow, headerRow, ...dataRows];\n\nreturn finalOutput.map(item => ({ json: item }));"
+      },
+      "id": "bcb56da8-3807-4486-aeb8-9f5031bbbaff",
+      "name": "Clean Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/11nbC2fEN_KVlz1T34fZ3kg-0BKaNwThO7P3hUGF45E8/edit?usp=sharing",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Entity Name",
+              "displayName": "Entity Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Industry Niche",
+              "displayName": "Industry Niche",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Description",
+              "displayName": "Description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Employee Count",
+              "displayName": "Employee Count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Revenue Estimate",
+              "displayName": "Revenue Estimate",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Year Founded",
+              "displayName": "Year Founded",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Key Technologies",
+              "displayName": "Key Technologies",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Key Decision Maker",
+              "displayName": "Key Decision Maker",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Website",
+              "displayName": "Website",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Contact Email",
+              "displayName": "Contact Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Location",
+              "displayName": "Location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "LinkedIn URL",
+              "displayName": "LinkedIn URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Confidence Score",
+              "displayName": "Confidence Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "0eb911fb-04ed-47aa-a529-d7c74c4712c7",
+      "name": "Save to Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        672,
+        0
+      ],
+      "credentials": {
+        "googleApi": {
+          "id": "20iNtp2vIXyylZCI",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "research",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "73dfe0fb-b99a-4f54-b8d5-47fd68c55707",
+      "name": "Webhook",
+      "webhookId": "2f9559db-d721-4f39-bf26-a63f21f331d4"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Perplexity Analyst": {
+      "main": [
+        [
+          {
+            "node": "Clean Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean Data": {
+      "main": [
+        [
+          {
+            "node": "Save to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Perplexity Analyst",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "959bce27-7610-4299-b468-698d950feb72",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "304fc42e87f3d9fda9d9c2c341c6c8fc161f5c84b0b5bef57f12f269ddae3781"
+  },
+  "id": "fBOSnJ5fB8DZaH5R",
+  "tags": []
+}
