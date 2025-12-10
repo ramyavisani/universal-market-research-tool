@@ -8,7 +8,7 @@ This project is an automated OSINT tool designed to scout B2B leads using AI age
 3. **Database:** Results are automatically cleaned and saved to Google Sheets.
 
 ## 📂 Project Files
-* **[index.html](index.html):** The frontend code for the dashboard.
+* **[index.html](html form.html):** The frontend code for the dashboard.
 * **[workflow.json](workflow.json):** The backend automation logic for n8n.
 * **[Project Report](Project_Report.md):** 📄 **READ THIS FIRST** - Full technical documentation and architecture.
 
