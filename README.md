@@ -10,6 +10,6 @@ This project is an automated OSINT tool designed to scout B2B leads using AI age
 ## 📂 Project Files
 * **[Dashboard Interface](html%20form.html):** The frontend code for the dashboard.
 * **[Automation Workflow](Market_Research_Tool.json):** The backend automation logic for n8n.
-* **[Project Report](Project_Report.md):** 📄 **READ THIS FIRST** - Full technical documentation and architecture.
+* **[Project Details](Project_Report.md):** 📄 **READ THIS FIRST** - Full technical documentation and architecture.
 
 
