@@ -63,3 +63,31 @@ const headerRow = {
 
 // Combine empty spacing, header, and actual data
 const finalOutput = [emptyRow, headerRow, ...dataRows];
+
+## B. The Frontend Interface
+
+The dashboard is a single-file HTML application (`html form.html`). It handles the POST request using the browser's **fetch API**.
+
+- **State Management:** The button enters a “Loading” state to prevent double submissions.  
+- **Error Handling:** Catches network errors if the n8n instance is offline.
+
+---
+
+## 🚀 5. Installation & Setup
+
+### **Prerequisites**
+- An instance of **n8n**  
+- A **Perplexity API Key**  
+- A **Google Cloud Service Account** (for Sheets access)
+
+### **Step-by-Step**
+
+1. **Backend:**  
+   Download `Market_Research_Tool.json` from this repository and import it into n8n.
+
+2. **Credentials:**  
+   Set up your Perplexity and Google Sheets credentials in n8n.
+
+3. **Frontend:**  
+   Open `html form.html` in a text editor and replace  
+   ```js
